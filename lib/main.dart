@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(LoginPage());
@@ -12,10 +15,12 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool isLoggedIn = false;
+  var profileData;
 
-  void onLoginStatusChanged(bool isLoggedIn) {
+  void onLoginStatusChanged(bool isLoggedIn, {profileData}) {
     setState(() {
       this.isLoggedIn = isLoggedIn;
+      this.profileData = profileData;
     });
   }
 
@@ -29,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
         body: Container(
           child: Center(
             child: isLoggedIn
-                ? Text("Logged In")
+                ? Text("Logged in as: ${profileData['name']}")
                 : RaisedButton(
                     child: Text("Login with Facebook"),
                     onPressed: () => initiateFacebookLogin(),
@@ -56,7 +61,12 @@ class _LoginPageState extends State<LoginPage> {
         break;
       case FacebookLoginStatus.loggedIn:
         print("LoggedIn");
-        onLoginStatusChanged(true);
+        var graphResponse = await http.get(
+            'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email&access_token=${facebookLoginResult
+                .accessToken.token}');
+        var profile = json.decode(graphResponse.body);
+        print(profile.toString());
+        onLoginStatusChanged(true, profileData: profile);
         break;
     }
   }
