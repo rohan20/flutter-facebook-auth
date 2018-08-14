@@ -46,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
     var facebookLogin = FacebookLogin();
     var facebookLoginResult = await facebookLogin.logInWithReadPermissions([
       'email',
-      'public_profile',
     ]);
 
     switch (facebookLoginResult.status) {
