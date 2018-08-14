@@ -17,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoggedIn = false;
   var profileData;
 
+  var facebookLogin = FacebookLogin();
+
   void onLoginStatusChanged(bool isLoggedIn, {profileData}) {
     setState(() {
       this.isLoggedIn = isLoggedIn;
@@ -30,6 +32,16 @@ class _LoginPageState extends State<LoginPage> {
       home: Scaffold(
         appBar: AppBar(
           title: Text("Facebook Login"),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(
+                Icons.exit_to_app,
+                color: Colors.white,
+              ),
+              onPressed: () => facebookLogin.isLoggedIn
+                  .then((isLoggedIn) => isLoggedIn ? _logout() : {}),
+            ),
+          ],
         ),
         body: Container(
           child: Center(
@@ -43,10 +55,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void initiateFacebookLogin() async {
-    var facebookLogin = FacebookLogin();
-    var facebookLoginResult = await facebookLogin.logInWithReadPermissions([
-      'email',
-    ]);
+    var facebookLoginResult =
+        await facebookLogin.logInWithReadPermissions(['email']);
 
     switch (facebookLoginResult.status) {
       case FacebookLoginStatus.error:
@@ -101,5 +111,11 @@ class _LoginPageState extends State<LoginPage> {
       child: Text("Login with Facebook"),
       onPressed: () => initiateFacebookLogin(),
     );
+  }
+
+  _logout() async {
+    await facebookLogin.logOut();
+    onLoginStatusChanged(false);
+    print("Logged out");
   }
 }
