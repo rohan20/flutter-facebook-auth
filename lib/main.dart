@@ -34,11 +34,8 @@ class _LoginPageState extends State<LoginPage> {
         body: Container(
           child: Center(
             child: isLoggedIn
-                ? Text("Logged in as: ${profileData['name']}")
-                : RaisedButton(
-                    child: Text("Login with Facebook"),
-                    onPressed: () => initiateFacebookLogin(),
-                  ),
+                ? _displayUserData(profileData)
+                : _displayLoginButton(),
           ),
         ),
       ),
@@ -47,27 +44,63 @@ class _LoginPageState extends State<LoginPage> {
 
   void initiateFacebookLogin() async {
     var facebookLogin = FacebookLogin();
-    var facebookLoginResult =
-        await facebookLogin.logInWithReadPermissions(['email']);
+    var facebookLoginResult = await facebookLogin.logInWithReadPermissions([
+      'email',
+      'public_profile',
+    ]);
 
     switch (facebookLoginResult.status) {
       case FacebookLoginStatus.error:
-        print("Error");
         onLoginStatusChanged(false);
         break;
       case FacebookLoginStatus.cancelledByUser:
-        print("CancelledByUser");
         onLoginStatusChanged(false);
         break;
       case FacebookLoginStatus.loggedIn:
-        print("LoggedIn");
         var graphResponse = await http.get(
-            'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email&access_token=${facebookLoginResult
+            'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email,picture.height(200)&access_token=${facebookLoginResult
                 .accessToken.token}');
+
         var profile = json.decode(graphResponse.body);
         print(profile.toString());
+
         onLoginStatusChanged(true, profileData: profile);
         break;
     }
+  }
+
+  _displayUserData(profileData) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          height: 200.0,
+          width: 200.0,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: DecorationImage(
+              fit: BoxFit.fill,
+              image: NetworkImage(
+                profileData['picture']['data']['url'],
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 28.0),
+        Text(
+          "Logged in as: ${profileData['name']}",
+          style: TextStyle(
+            fontSize: 20.0,
+          ),
+        ),
+      ],
+    );
+  }
+
+  _displayLoginButton() {
+    return RaisedButton(
+      child: Text("Login with Facebook"),
+      onPressed: () => initiateFacebookLogin(),
+    );
   }
 }
